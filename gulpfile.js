@@ -6,6 +6,8 @@ var jshint = require('gulp-jshint');
 var gulpif = require('gulp-if');
 var del = require('del');
 var argv = require('yargs').argv;
+var Bust = require('gulp-bust');
+var bust = new Bust();
 
 var debug = !!argv.debug
 
@@ -35,6 +37,7 @@ gulp.task('build', ['clean'], function() {
     .pipe(uglify(uglifyOpts))
     .pipe(concat('kloudless-authenticator.min.js'))
     .pipe(gulpif(debug, sourcemaps.write()))
+    .pipe(gulpif(!debug, bust.resources()))
     .pipe(gulp.dest('build'));
 });
 
