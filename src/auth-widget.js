@@ -14,7 +14,6 @@
   window.Kloudless.baseUrl = BASE_URL;
   window.Kloudless.apiVersion = "v1";
   window.Kloudless._authenticators = {};
-  window.Kloudless._authenticators_by_element = {};
   window.Kloudless._authenticator_iframe = undefined;
   window.Kloudless._popup = undefined;
 
@@ -276,7 +275,9 @@
       }
     };
 
-    if (window.Kloudless._authenticators_by_element[element.outerHTML] !== undefined) {
+    var authID = element.getAttribute('data-kloudless-authID');
+
+    if (!!authID && window.Kloudless._authenticators[authID] !== undefined) {
       window.Kloudless.stop(element);
     }
 
@@ -284,7 +285,8 @@
       clickHandler: clickHandler,
       callback: callback,
     };
-    window.Kloudless._authenticators_by_element[element.outerHTML] = requestId
+
+    element.setAttribute('data-kloudless-authID', requestId);
     element.addEventListener('click', clickHandler);
   };
 
@@ -296,12 +298,12 @@
     if (window.jQuery !== undefined && element instanceof window.jQuery) {
       element = element.get(0);
     }
-    var authID = window.Kloudless._authenticators_by_element[element.outerHTML]
+    var authID = element.getAttribute('data-kloudless-authID');
     if (authID) {
       var auth = window.Kloudless._authenticators[authID];
       element.removeEventListener('click', auth.clickHandler);
       delete window.Kloudless._authenticators[authID];
-      delete window.Kloudless._authenticators_by_element[element.outerHTML];
+      element.removeAttribute('data-kloudless-authID');
     }
     else {
       console.log('No click listener found to remove.');
