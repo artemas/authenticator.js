@@ -305,9 +305,6 @@
       delete window.Kloudless._authenticators[authID];
       element.removeAttribute('data-kloudless-authID');
     }
-    else {
-      console.log('No click listener found to remove.');
-    }
   };
 
   /*
