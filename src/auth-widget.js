@@ -31,22 +31,24 @@
   }
 
   window.addEventListener('message', function(message) {
-    var ns = "kloudless:";
+    var namespace = "kloudless:";
 
     if (debug) {
       console.log('[DEBUG] Message received', message);
+    }
+
+    // check if message has kloudless namespace
+    if (typeof(message.data) !== "string" || message.data.indexOf(namespace) !== 0) {
+      // if the message is from other app, ignore it
+      return;
     }
 
     if (message.origin !== window.Kloudless.baseUrl) {
       console.log('[ERROR] Origin mismatch:', message);
       return;
     }
-    else if (message.data.indexOf(ns) !== 0) {
-      console.log('[ERROR] Namespace mismsatch:', message);
-      return;
-    }
 
-    var contents = JSON.parse(message.data.substring(ns.length));
+    var contents = JSON.parse(message.data.substring(namespace.length));
     if (contents.type != 'authentication') {
         console.log('[ERROR] Incorrect content type:', message);
       return;
@@ -192,17 +194,36 @@
 
   /**
    * Turn an element into a widget
-   * See ./make-widget-test.js for example usage
    *
-   * @param  Element  element  The element to turn into a widget
-   * @param  Object   params   A hash of parameters to encode into the GET querystring
-   * @param  Function callback  A response handler of signature function(err, result)
+   * Overloaded forms:
+   *
+   * First:
+   * @param  Element  element   The element to turn into a widget and set a click handler
+   *                            on to launch.
+   * @param  Object   params    A hash of parameters to encode into the GET querystring
+   * @param  Function callback  A response handler of signature function(result)
+   *
+   * Second, to not auto-launch the authenticator:
+   *
+   * @param  Object   params    A hash of parameters to encode into the GET querystring
+   * @param  Function callback  A response handler of signature function(result)
    */
   window.Kloudless.authenticator = function(element, params, callback) {
     addIframe();
 
     if (window.jQuery !== undefined && element instanceof window.jQuery) {
       element = element.get(0);
+    }
+
+    if (element && !(element instanceof Element)) {
+      if (callback) {
+        throw new Error("'element' must be an Element or jQuery object.");
+      }
+
+      // Shift arguments right once.
+      callback = params;
+      params = element;
+      element = null;
     }
 
    if (!params.client_id && !params.app_id) {
@@ -288,6 +309,10 @@
 
     element.setAttribute('data-kloudless-authID', requestId);
     element.addEventListener('click', clickHandler);
+
+    return {
+      launch: clickHandler
+    };
   };
 
   /**
